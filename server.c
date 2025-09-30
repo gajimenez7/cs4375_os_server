@@ -54,7 +54,7 @@ static int open_tcp_fd(uint16_t port) {
   struct sockaddr_in serveraddr;
   int fd;
   int backlog_size = 5;
-  /* create socket file descriptor */
+  /* create ipv4 tcp socket file descriptor */
   fd = socket(AF_INET, SOCK_STREAM, 0);
   if (fd < 0) {
     fprintf(stderr, "Could not create socket: %s\n", strerror(errno));
@@ -93,35 +93,34 @@ int run_server_tool(const int aux_fd) {
   ssize_t received_result;
   ssize_t result_of_send;
   size_t bytes_to_send;
-  int client_file_desc;
+  int client_fd;
   char message[8192];
   clientaddrlen = (socklen_t)sizeof(client_addr);
   /* accept client file descriptor */
-  client_file_desc =
-      accept(aux_fd, (struct sockaddr *)&client_addr, &clientaddrlen);
+  client_fd = accept(aux_fd, (struct sockaddr *)&client_addr, &clientaddrlen);
 
-  if (client_file_desc < 0) {
+  if (client_fd < 0) {
     fprintf(stderr, "Could not accept connection %s\n", strerror(errno));
-    if (close(client_file_desc) < 0) {
+    if (close(client_fd) < 0) {
       fprintf(stderr, "Cannot close a socket: %s\n", strerror(errno));
     }
     return 0;
   }
 
   /* received message from client file descriptor */
-  received_result = recv(client_file_desc, message, sizeof(message), 0);
+  received_result = recv(client_fd, message, sizeof(message), 0);
 
   /* check if packet was received */
   if (received_result < ((ssize_t)0)) {
     fprintf(stderr, "Cannot receive a packet: %s\n", strerror(errno));
-    if (close(client_file_desc) < 0) {
+    if (close(client_fd) < 0) {
       fprintf(stderr, "Cannot close a socket: %s\n", strerror(errno));
     }
     return -1;
   }
   /* client closed connection */
   else if (received_result == ((size_t)0)) {
-    if (close(client_file_desc) < 0) {
+    if (close(client_fd) < 0) {
       fprintf(stderr, "Cannot close a socket: %s\n", strerror(errno));
     }
     return 0;
@@ -134,16 +133,16 @@ int run_server_tool(const int aux_fd) {
   bytes_to_send = received_result;
 
   /* write to client */
-  result_of_send = better_write(client_file_desc, message, bytes_to_send);
+  result_of_send = better_write(client_fd, message, bytes_to_send);
 
   if (result_of_send < (ssize_t)0) {
     fprintf(stderr, "Could not send message: %s\n", strerror(errno));
-    if (close(client_file_desc) < 0) {
+    if (close(client_fd) < 0) {
       fprintf(stderr, "Cannot close a socket: %s\n", strerror(errno));
     }
     return -1;
   }
-  if (close(client_file_desc) < 0) {
+  if (close(client_fd) < 0) {
     fprintf(stderr, "Cannot close a socket: %s\n", strerror(errno));
   }
 
