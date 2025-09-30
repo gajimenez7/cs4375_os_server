@@ -46,6 +46,7 @@ void process_message(char *message, const size_t size) {
     }
   }
   for (int i = 0; i < string_len; i++) {
+    /* use of level 3 function toupper :) */
     message[i] = (char)toupper((unsigned char)message[i]);
   }
 }
